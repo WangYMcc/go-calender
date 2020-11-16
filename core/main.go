@@ -1,11 +1,15 @@
 package main
 
 import (
-	_ "core/routers"
+	"core/models"
+	_ "core/sysInit"
 	"github.com/astaxie/beego"
 )
 
 func main() {
-	beego.Run()
+	user := models.SelectAll()
+	beego.Debug(user)
+	//controllers.Generate()
+	//beego.Run()
 }
 
