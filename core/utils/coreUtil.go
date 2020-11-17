@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"github.com/astaxie/beego"
 	"sync"
 	"time"
 )
@@ -32,7 +31,7 @@ type Worker struct {
 }
 
 func init(){
-	beego.Debug("init")
+	//beego.Debug("init")
 }
 // 实例化一个工作节点
 func NewWorker(workerId int64) (*Worker, error) {
