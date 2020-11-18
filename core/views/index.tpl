@@ -78,6 +78,10 @@
     <h1 class="logo">Welcome to Beego</h1>
     <div class="description">
       Beego is a simple & powerful Go web framework which is inspired by tornado and sinatra.
+      <form action="/user/insert">
+        <input type="text" id="username"/>
+        <input />
+      </form>
     </div>
   </header>
   <footer>

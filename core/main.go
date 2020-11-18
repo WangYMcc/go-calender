@@ -1,28 +1,31 @@
 package main
 
 import (
-	"core/models"
+	"core/controllers"
 	_ "core/models"
 	_ "core/sysInit"
-	"fmt"
 	"github.com/astaxie/beego"
-	"time"
+	"github.com/astaxie/beego/context"
+	_ "github.com/astaxie/beego/session/redis"
 )
 
 func main() {
-	//controllers.Generate()
-	go func() {
-		time.Sleep(3 * time.Second)
-		beego.Debug("start")
-		user := make([]models.User, 1000)
-
-		for i := 0; i < len(user); i++ {
-			user[i] = models.User{Username: "xm" + fmt.Sprint(i), Password: fmt.Sprint(i,i,i,i,i,i)}
+	beego.InsertFilter("/*)",beego.BeforeRouter, func(ctx *context.Context) {
+		r, _ := ctx.Request.Cookie("beegosessionID")
+		if r != nil {
+			beego.Info(r.Value)
 		}
+	})
 
-		models.InsertMore(user)
-		beego.Debug("ok")
-	}()
+	beego.Router("/", &controllers.MainController{})
+	beego.Router("/user/all", &controllers.UserController{}, "get:GetAll")
+	beego.Router("/user/:id", &controllers.UserController{}, "get:GetUser")
+	beego.Router("/user/insert", &controllers.UserController{}, "put:InsertUser")
+	beego.Router("/user/insertmore", &controllers.UserController{}, "put:InsertMore")
+	beego.Router("/user/:id", &controllers.UserController{}, "delete:DeleteUser")
+	beego.Router("/user/deletemore", &controllers.UserController{}, "delete:DeleteMore")
+	beego.Router("/user/update", &controllers.UserController{}, "post:UpdateUser")
+	beego.Router("/user/updatemore", &controllers.UserController{}, "post:UpdateMore")
 	beego.Run()
 }
 

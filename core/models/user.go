@@ -21,7 +21,7 @@ var (
 type User struct {
 	mu sync.Mutex
 	Id       int64 `orm:"column(id);unique;pk"`
-	Username string `orm:"column(username)"`
+	Username string `orm:"column(username);unique;"`
 	Password string `orm:"column(password);null"`
 }
 
@@ -100,12 +100,12 @@ func RemoveUserCache(id int64) error{
 }
 
 //从数据库中通过id获取user信息
-func SelectById(id int) (*User){
-	var user User
+func SelectById(id int64) (*User){
+	user := User{Id: id}
 	conn := sysInit.GetRedisPool().Get()
 	defer conn.Close()
 
-	result, _ := conn.Do("GET", "user:" + string(id))
+	result, _ := conn.Do("GET", "user:" + fmt.Sprint(id))
 	if result != nil {
 		bytes, _ := redis.Bytes(result, nil)
 		err := json.Unmarshal(bytes, &user)
@@ -124,7 +124,7 @@ func SelectById(id int) (*User){
 
 	data, _ := json.Marshal(user)
 
-	conn.Do("SET", "user:" + string(id), data)
+	conn.Do("SET", "user:" + fmt.Sprint(id), data)
 	return &user
 }
 
@@ -169,7 +169,8 @@ func SelectByPage(displayNum int, page int) ([]User){
 //添加一条user信息
 func (user User)Insert() (*User){
 	workderc, _ := utils.NewWorker(int64(1))
-	user.Id = workderc.GetId()
+	id := workderc.GetId()
+	user.Id = id
 
 	user.mu.Lock()
 	defer user.mu.Unlock()
@@ -185,8 +186,8 @@ func (user User)Insert() (*User){
 		return nil
 	}else {
 		o.Commit()
+		user.Id = id
 		err := UpdateUserCache(user)
-
 		if err != nil {
 			beego.Error(err)
 		}
@@ -196,15 +197,18 @@ func (user User)Insert() (*User){
 }
 
 //添加大量user信息
-func InsertMore(user []User) ([]User){
+func InsertMore(user []User) ([]User, error){
 	workderc, _ := utils.NewWorker(int64(1))
 	var err error
 
 	o := orm.NewOrm()
 	o.Begin()
 
+	ids := make([]int64, len(user))
 	for i := 0; i < len(user); i++ {
-		user[i].Id = workderc.GetId()
+		ids[i] = workderc.GetId()
+
+		user[i].Id = ids[i]
 		if err == nil {
 			_, err = o.Insert(&user[i])
 		}else {
@@ -214,14 +218,16 @@ func InsertMore(user []User) ([]User){
 
 	if err != nil {
 		o.Rollback()
+		return []User{}, err
 	}else{
 		for i := 0; i < len(user); i++ {
+			user[i].Id = ids[i]
 			UpdateUserCache(user[i])
 		}
 		o.Commit()
 	}
 
-	return user
+	return user, nil
 }
 
 //更新条user信息
@@ -246,6 +252,7 @@ func (user User) Update() (error){
 }
 
 func (user User) Delete() (error) {
+	id := user.Id
 	user.mu.Lock()
 	defer user.mu.Unlock()
 
@@ -254,7 +261,7 @@ func (user User) Delete() (error) {
 	_, err := o.Delete(&user)
 
 	if err == nil {
-		RemoveUserCache(user.Id)
+		RemoveUserCache(id)
 		o.Commit()
 	}else {
 		o.Rollback()
@@ -290,6 +297,47 @@ func DeleteMore(users []User) (error) {
 	}
 
 	return err_o
+}
+
+func Query(key string, value string) ([]User, error) {
+	var user []User
+
+	qb, _ := orm.NewQueryBuilder("mysql")
+	qb.Select("id", "username", "password").From("user").Where(key + " like '%" + value + "%'")
+	sql := qb.String()
+
+	o := orm.NewOrm()
+	_, err := o.Raw(sql).QueryRows(&user)
+
+	return user, err
+}
+
+//批量更新user信息
+func UpdateMore(user []User) ([]User, error){
+	var err error
+
+	o := orm.NewOrm()
+	o.Begin()
+
+	for i := 0; i < len(user); i++ {
+		if err == nil {
+			_, err = o.Update(&user[i])
+		}else {
+			break
+		}
+	}
+
+	if err != nil {
+		o.Rollback()
+		return []User{}, err
+	}else{
+		for i := 0; i < len(user); i++ {
+			UpdateUserCache(user[i])
+		}
+		o.Commit()
+	}
+
+	return user, nil
 }
 
 

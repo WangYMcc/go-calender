@@ -5,6 +5,7 @@ go 1.15
 require github.com/astaxie/beego v1.12.3
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
