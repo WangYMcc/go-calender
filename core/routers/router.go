@@ -6,5 +6,9 @@ import (
 )
 
 func init() {
-    beego.Router("/", &controllers.MainController{})
+	/*beego.InsertFilter("/)",beego.BeforeRouter, func(ctx *context.Context) {
+		//ctx.Redirect(401, "/")
+	})*/
+
+	beego.Router("/", &controllers.MainController{},"get:Get")
 }
