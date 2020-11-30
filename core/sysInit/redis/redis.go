@@ -1,6 +1,8 @@
-package sysInit
+package redis
 
 import (
+	"core/models"
+	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/gomodule/redigo/redis"
 	"time"
@@ -53,6 +55,45 @@ func init(){
 //对外暴露连接池
 func GetRedisPool() *redis.Pool{
 	return pool
+}
+
+
+func SET(key string, val interface{}) error{
+	conn := pool.Get()
+	//注意close()
+	defer conn.Close()
+
+
+	var u []byte
+	var err error
+	u, err = json.Marshal(val)
+
+	if err != nil {
+		return err
+	}
+
+	_, e := conn.Do("SET", key, u)
+
+	return e
+}
+
+func GET(key string, val interface{}) (models.Model, error){
+	conn := pool.Get()
+	//注意close()
+	defer conn.Close()
+
+
+	var u []byte
+	var err error
+	u, err = json.Marshal(val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, e := conn.Do("SET", key, u)
+
+	return nil, e
 }
 
 func IsRedisCacheInit() bool{

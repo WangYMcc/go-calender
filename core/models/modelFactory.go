@@ -1,8 +1,8 @@
 package models
 
 import (
-	"core/sysInit"
-	"core/utils"
+	redis2 "core/sysInit/redis"
+	"core/utils/snow"
 	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
@@ -23,7 +23,7 @@ type Model interface {
 }
 
 func UpdateObjCache(obj Model) error{
-	conn := sysInit.GetRedisPool().Get()
+	conn := redis2.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 
@@ -34,7 +34,7 @@ func UpdateObjCache(obj Model) error{
 }
 
 func Insert(obj Model) interface{} {
-	workderc, _ := utils.NewWorker(int64(1))
+	workderc, _ := snow.NewWorker(int64(1))
 	id := workderc.GetId()
 	obj.SetId(id)
 
@@ -68,7 +68,7 @@ func InsertMore(objs []Model) ([]Model, error){
 		return nil, fmt.Errorf("input is null")
 	}
 
-		workderc, _ := utils.NewWorker(int64(1))
+		workderc, _ := snow.NewWorker(int64(1))
 	var err error
 
 	o := orm.NewOrm()
@@ -162,7 +162,7 @@ func QueryForMap(sql string) ([]orm.Params, error) {
 
 //刷新redis 某个表缓存
 func FlushObjCache(obj Model) error{
-	conn := sysInit.GetRedisPool().Get()
+	conn := redis2.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 
@@ -203,7 +203,7 @@ func SelectAll(obj Model) ([]Model, error){
 
 //从数据库中通过id获取表信息
 func SelectById(obj Model) (Model){
-	conn := sysInit.GetRedisPool().Get()
+	conn := redis2.GetRedisPool().Get()
 	defer conn.Close()
 
 	result, _ := conn.Do("GET", obj.TableName() + ":" + fmt.Sprint(obj.GetId()))
@@ -325,7 +325,7 @@ func DeleteMore(objs []Model) (error) {
 
 //移除redis单个缓存
 func RemoveObjCache(obj Model) error{
-	conn := sysInit.GetRedisPool().Get()
+	conn := redis2.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 

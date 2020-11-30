@@ -1,14 +1,16 @@
 package routers
 
 import (
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
 	"sso/controllers"
-	"github.com/astaxie/beego"
 )
 
 func init() {
-	beego.InsertFilter("/*)",beego.BeforeRouter, func(ctx *context.Context) {
-		beego.Info(ctx.GetCookie("beegosessionID"))
+	beego.InsertFilter("/*",beego.BeforeRouter, func(ctx *context.Context) {
+		if ctx.Request.URL.String() == "/sso/to" {
+
+		}
 
 	})
 

@@ -2,7 +2,8 @@ package models
 
 import (
 	"core/models"
-	"core/sysInit"
+	"core/sysInit/redis"
+	"core/sysInit/sql"
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
@@ -78,7 +79,7 @@ func (u *User)QueryResult(maps []orm.Params) ([]models.Model, error)  {
 
 //实现String函数
 func (u User) String() string{
-	return fmt.Sprint(`{"id": `, u.Id, `, "userkey": "`, u.UserKey, `", "username": "`, u.Username, `", "passowrd": "`, u.Password, `"}`)
+	return fmt.Sprint(`{"id": `, u.Id, `, "userkey": "`, u.UserKey, `", "username": "`, u.Username, `"}`)
 }
 
 func NewUser(m map[string]string) *User {
@@ -103,13 +104,13 @@ func init(){
 	locl = User{Id: 0}
 
 	go func(){
-		for !sysInit.IsOrmInit() {
+		for !sql.IsOrmInit() {
 			time.Sleep(1 * time.Second)
 		}
 
-		sysInit.RunSyncDb()
+		sql.RunSyncDb()
 
-		for !sysInit.IsRedisCacheInit() {
+		for !redis.IsRedisCacheInit() {
 			time.Sleep(1 * time.Second)
 		}
 

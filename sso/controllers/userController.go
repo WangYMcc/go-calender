@@ -18,7 +18,7 @@ func (c *UserController) GetAll(){
 	users, err := models.SelectAll(&models2.User{})
 
 	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 	}else {
 		c.Data["json"] = users
 	}
@@ -34,7 +34,7 @@ func (c *UserController) GetUser(){
 	user := models.SelectById(&models2.User{Id: id})
 
 	if err != nil ||  user == nil {
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 		c.ServeJSON()
 		return
 	}
@@ -50,7 +50,7 @@ func (c *UserController) InsertUser(){
 	err := json.Unmarshal([]byte(jsonStr), &mapResult)
 
 	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, "user insert fault", "")
+		c.Data["json"] = utils.GenerateRequest(400, "user insert fault")
 	}
 
 	u, err := models.AccurateQuery("username", mapResult["username"], &models2.User{});
@@ -62,11 +62,11 @@ func (c *UserController) InsertUser(){
 		if &u != nil {
 			c.Data["json"] = u
 		}else {
-			c.Data["json"] = utils.GenerateRequest(500, "user insert fault", "")
+			c.Data["json"] = utils.GenerateRequest(500, "user insert fault")
 		}
 
 	}else {
-		c.Data["json"] = utils.GenerateRequest(400, "username is repeated", "")
+		c.Data["json"] = utils.GenerateRequest(400, "username is repeated")
 	}
 
 	c.ServeJSON()
@@ -77,13 +77,13 @@ func (c *UserController) DeleteUser(){
 	id, err := strconv.ParseInt(param, 10, 64)
 
 	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, "Illegal id", "")
+		c.Data["json"] = utils.GenerateRequest(400, "Illegal id")
 		c.ServeJSON()
 		return
 	}
 
 	if models.SelectById(&models2.User{Id: id}) == nil {
-		c.Data["json"] = utils.GenerateRequest(200, "", "user has deleted")
+		c.Data["json"] = utils.GenerateRequest(200,  "user has deleted")
 		c.ServeJSON()
 		return
 	}
@@ -91,9 +91,9 @@ func (c *UserController) DeleteUser(){
 	err_u := models.Delete(&models2.User{Id: id})
 
 	if err_u != nil {
-		c.Data["json"] = utils.GenerateRequest(500, err_u.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
 	}else {
-		c.Data["json"] = utils.GenerateRequest(200, "", "user delete successful")
+		c.Data["json"] = utils.GenerateRequest(200, "user delete successful")
 	}
 
 	c.ServeJSON()
@@ -106,7 +106,7 @@ func (c *UserController) DeleteMore(){
 	err := json.Unmarshal([]byte(param), &idResult)
 
 	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 		c.ServeJSON()
 		return
 	}
@@ -120,9 +120,9 @@ func (c *UserController) DeleteMore(){
 	err_u := models.DeleteMore(user)
 
 	if err_u != nil {
-		c.Data["json"] = utils.GenerateRequest(500, err_u.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(500, err.Error())
 	}else {
-		c.Data["json"] = utils.GenerateRequest(200, "", "user delete successful")
+		c.Data["json"] = utils.GenerateRequest(200, "user delete successful")
 	}
 
 	c.ServeJSON()
@@ -146,10 +146,10 @@ func (c *UserController) InsertMore(){
 		if objs != nil {
 			c.Data["json"] = objs
 		}else{
-			c.Data["json"] = utils.GenerateRequest(500, err_u.Error(), "")
+			c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
 		}
 	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 	}
 
 	c.ServeJSON()
@@ -166,12 +166,12 @@ func (c *UserController) UpdateUser(){
 
 		var e error
 		if e = models.Update(user); e == nil {
-			c.Data["json"] = utils.GenerateRequest(200, "", "update user successful")
+			c.Data["json"] = utils.GenerateRequest(200, "update user successful")
 		}else {
-			c.Data["json"] = utils.GenerateRequest(500, e.Error(), "")
+			c.Data["json"] = utils.GenerateRequest(500, e.Error())
 		}
 	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 	}
 
 	c.ServeJSON()
@@ -195,10 +195,10 @@ func (c *UserController) UpdateMore(){
 		if len(users) != 0 {
 			c.Data["json"] = users
 		}else{
-			c.Data["json"] = utils.GenerateRequest(500, err_u.Error(), "")
+			c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
 		}
 	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error(), "")
+		c.Data["json"] = utils.GenerateRequest(400, err.Error())
 	}
 
 	c.ServeJSON()

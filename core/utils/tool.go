@@ -10,8 +10,7 @@ var (
 
 type MessageResponse struct {
 	Code int
-	Err string
-	Success string
+	Message string
 }
 
 func CheckPkId(id int64) bool{
@@ -22,8 +21,8 @@ func CheckPkId(id int64) bool{
 	return true
 }
 
-func GenerateRequest(code int, err string, success string) MessageResponse {
-	return MessageResponse{Code: code, Err: err, Success: success}
+func GenerateRequest(code int, message string) MessageResponse {
+	return MessageResponse{Code: code, Message: message}
 }
 
 

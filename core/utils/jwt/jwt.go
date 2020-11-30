@@ -1,4 +1,4 @@
-package utils
+package jwt
 
 import (
 	"github.com/astaxie/beego"
@@ -6,10 +6,25 @@ import (
 	"time"
 )
 
-func CreateToken(uid string) (string, error) {
+func CreateAccessToken(uid string) (string, error) {
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid":  uid,
 		"exp":  time.Now().Add(time.Minute * 30).Unix(),
+	})
+
+	token, err := at.SignedString([]byte(beego.AppConfig.String("jwt.secret")))
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func CreateFlushToken(uid string) (string, error) {
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid":  uid,
+		"exp":  time.Now().Add(time.Minute * 35).Unix(),
 	})
 
 	token, err := at.SignedString([]byte(beego.AppConfig.String("jwt.secret")))

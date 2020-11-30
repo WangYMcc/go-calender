@@ -1,4 +1,4 @@
-package sysInit
+package sql
 
 import (
 	"github.com/astaxie/beego"
