@@ -20,9 +20,13 @@ var (
 type User struct {
 	mu sync.Mutex
 	Id       int64 `orm:"column(id);unique;pk"`
-	UserKey string `orm:"column(userkey);unique;"`
-	Username string `orm:"column(username);unique;"`
-	Password string `orm:"column(password);null"`
+	Name string `orm:"column(name)"`
+	Account string `orm:"column(account);unique"`
+	Password string `orm:"column(password)"`
+	Phone string `orm:"column(phone);null"`
+	Email string `orm:"column(email);null"`
+	Sex string `orm:"column(sex);null"`
+	UserKey string `orm:"column(userkey);null"`
 }
 
 func (u *User)Obj() interface{} {
@@ -52,7 +56,7 @@ func (u *User)ToModel() models.Model {
 
 
 func (u *User)QueryKey() string{
-	return "id, userkey, username, password"
+	return "id, name, account, password, phone, email, sex, userkey"
 }
 
 func (u *User)QueryResult(maps []orm.Params) ([]models.Model, error)  {
@@ -65,13 +69,20 @@ func (u *User)QueryResult(maps []orm.Params) ([]models.Model, error)  {
 
 	for i := 0; i < len(maps); i++ {
 		id, err := strconv.ParseInt(fmt.Sprint(maps[i]["id"]), 10, 64)
-		user[i] = User{Id: id, Username: fmt.Sprint(maps[i]["username"]), Password: fmt.Sprint(maps[i]["password"])}
-		models[i] = user[i].ToModel()
+		user[i] = User{
+			Id: id,
+			Name: fmt.Sprint(maps[i]["name"]),
+			Password: fmt.Sprint(maps[i]["password"]),
+			Account: fmt.Sprint(maps[i]["account"]),
+			Phone: fmt.Sprint(maps[i]["phone"]),
+			Email: fmt.Sprint(maps[i]["email"]),
+			Sex: fmt.Sprint(maps[i]["sex"]),
+			UserKey: fmt.Sprint(maps[i]["userkey"])}
 
+		models[i] = user[i].ToModel()
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	return models, nil
@@ -79,7 +90,16 @@ func (u *User)QueryResult(maps []orm.Params) ([]models.Model, error)  {
 
 //实现String函数
 func (u User) String() string{
-	return fmt.Sprint(`{"id": `, u.Id, `, "userkey": "`, u.UserKey, `", "username": "`, u.Username, `"}`)
+	return fmt.Sprint(
+		`{"id": `, u.Id,
+			`, "name": "`, u.Name,
+			`", "account": "`, u.Account,
+			`", "password": "`, u.Password,
+			`", "phone": "`, u.Phone,
+			`", "email": "`, u.Email,
+			`", "sex": "`, u.Sex,
+			`", "userkey": "`, u.UserKey,
+		`"}`)
 }
 
 func NewUser(m map[string]string) *User {
@@ -90,10 +110,13 @@ func NewUser(m map[string]string) *User {
 	if err == nil {
 		user.Id = id
 	}
-
-	user.UserKey = m["userkey"]
-	user.Username = m["username"]
+	user.Name = m["name"]
+	user.Account = m["account"]
 	user.Password = m["password"]
+	user.Phone = m["phone"]
+	user.Email = m["email"]
+	user.Sex = m["sex"]
+	user.UserKey = m["userkey"]
 
 	return &user
 }
@@ -126,17 +149,4 @@ func init(){
 	}()
 
 	beego.Debug("init")
-}
-
-func Login(username, password string) *User {
-	sql := "select id, username, password from user where username = '" + username + "' and password = '" + password + "'"
-
-	user, err := models.QueryFor(sql, &User{})
-
-	if err == nil && len(user) > 0{
-		u := user[0].Obj().(*User)
-		return u
-	}
-
-	return nil
 }

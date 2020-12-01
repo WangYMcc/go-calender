@@ -75,13 +75,16 @@
 
 <body>
   <header>
-    <h1 class="logo">Welcome to Beego</h1>
     <div class="description">
-      Beego is a simple & powerful Go web framework which is inspired by tornado and sinatra.
-      <form action="/user/insert">
-        <input type="text" id="username"/>
-        <input />
-      </form>
+        结构体名称:<input type="text" name="username" value="User"/><br>
+       	数据库表名:<input type="text" name="password" value="user"/> <br>
+       	<div id="param">
+       	</div>
+
+
+       	<input type="button" onclick="add()" value="新增参数">
+        <input type="button" onclick="remove()" value="减少参数">
+        <input type="button" value="生成">
     </div>
   </header>
   <footer>
@@ -94,6 +97,6 @@
   </footer>
   <div class="backdrop"></div>
 
-  <script src="/static/js/reload.min.js"></script>
+  <script src="/static/js/generate.js"></script>
 </body>
 </html>

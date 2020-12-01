@@ -6,12 +6,17 @@ import (
 	"sso/controllers"
 )
 
+var (
+	allow = []string{"/sso/login", "/sso/isLogin", "/"}
+)
 func init() {
 	beego.InsertFilter("/*",beego.BeforeRouter, func(ctx *context.Context) {
-		if ctx.Request.URL.String() == "/sso/to" {
 
-		}
-
+		/*for _, route := range allow {
+			if route == ctx.Request.URL.String() {
+				break
+			}
+		}*/
 	})
 
 	beego.Router("/sso/login", &controllers.LoginController{}, "get:Login")

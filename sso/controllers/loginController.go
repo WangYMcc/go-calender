@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"core/sysInit/redis"
 	"core/utils"
 	"core/utils/jwt"
+	"fmt"
 	"github.com/astaxie/beego"
 	"sso/models"
 )
@@ -24,6 +26,9 @@ func (c *LoginController) Login(){
 				beego.Info(flushToken)
 				c.Ctx.SetCookie("access_token", accessToken)
 				c.Ctx.SetCookie("flush_token", flushToken)
+
+				redis.SET(fmt.Sprint("loginUser:", u.Id), u)
+
 				c.Data["json"] = utils.GenerateRequest(200, "login successful")
 			}else {
 				c.Data["json"] = utils.GenerateRequest(400, e2.Error())
@@ -35,25 +40,35 @@ func (c *LoginController) Login(){
 		c.Data["json"] = utils.GenerateRequest(400, "username or password fault")
 	}
 
-
 	c.ServeJSON()
 }
 
 func (c *LoginController) Get(){
-	c.Data["json"] = utils.GenerateRequest(200, "SSO")
+	accessToken := c.Ctx.GetCookie("access_token")
+
+	_, err := jwt.ParseToken(accessToken)
+	if err != nil {
+		c.Data["json"] = utils.GenerateRequest(401, "login expired")
+		beego.Info("login expired")
+	}else {
+		c.Data["json"] = utils.GenerateRequest(200, "SSO")
+	}
 	c.ServeJSON()
 }
 
 func (c *LoginController) IsLogin(){
 	accessToken := c.Ctx.GetCookie("access_token")
-	flushToken := c.Ctx.GetCookie("access_token")
 	beego.Info(accessToken)
-	beego.Info(flushToken)
 
-	if flushToken == "" || accessToken == "" {
+	if accessToken == "" {
 		c.Data["json"] = utils.GenerateRequest(401, "login expired")
 	}else {
-		c.Data["json"] = utils.GenerateRequest(200, accessToken)
+		_, err := jwt.ParseToken(accessToken)
+		if err != nil {
+			c.Data["json"] = utils.GenerateRequest(401, "login expired")
+		}else {
+			c.Data["json"] = utils.GenerateRequest(200, accessToken)
+		}
 	}
 
 	c.ServeJSON()

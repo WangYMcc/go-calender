@@ -9,7 +9,7 @@ import (
 func CreateAccessToken(uid string) (string, error) {
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid":  uid,
-		"exp":  time.Now().Add(time.Minute * 30).Unix(),
+		"exp":  time.Now().Add(time.Minute * 1).Unix(),
 	})
 
 	token, err := at.SignedString([]byte(beego.AppConfig.String("jwt.secret")))
@@ -24,7 +24,7 @@ func CreateAccessToken(uid string) (string, error) {
 func CreateFlushToken(uid string) (string, error) {
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid":  uid,
-		"exp":  time.Now().Add(time.Minute * 35).Unix(),
+		"exp":  time.Now().Add(time.Minute * 5).Unix(),
 	})
 
 	token, err := at.SignedString([]byte(beego.AppConfig.String("jwt.secret")))

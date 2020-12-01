@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"core/models"
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/gomodule/redigo/redis"
@@ -77,23 +76,19 @@ func SET(key string, val interface{}) error{
 	return e
 }
 
-func GET(key string, val interface{}) (models.Model, error){
+func GET(key string, val interface{}) (error){
 	conn := pool.Get()
-	//注意close()
 	defer conn.Close()
 
-
-	var u []byte
-	var err error
-	u, err = json.Marshal(val)
-
+	result, err := conn.Do("GET", key)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	_, e := conn.Do("SET", key, u)
+	bytes, _ := redis.Bytes(result, nil)
+	e := json.Unmarshal(bytes, val)
 
-	return nil, e
+	return e
 }
 
 func IsRedisCacheInit() bool{
