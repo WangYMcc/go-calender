@@ -1,0 +1,8 @@
+beego.Router("/{{.modelSrc}}/{{.tableName}}/all", &controllers.{{.upModelName}}Controller{}, "get:GetAll")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/:id", &controllers.{{.upModelName}}Controller{}, "get:Get{{.upModelName}}")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/insert", &controllers.{{.upModelName}}Controller{}, "put:Insert{{.upModelName}}")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/insertmore", &controllers.{{.upModelName}}Controller{}, "put:InsertMore")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/:id", &controllers.{{.upModelName}}Controller{}, "delete:Delete{{.upModelName}}")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/deletemore", &controllers.{{.upModelName}}Controller{}, "delete:DeleteMore")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/update", &controllers.{{.upModelName}}Controller{}, "post:Update{{.upModelName}}")
+beego.Router("/{{.modelSrc}}/{{.tableName}}/updatemore", &controllers.{{.upModelName}}Controller{}, "post:UpdateMore")
