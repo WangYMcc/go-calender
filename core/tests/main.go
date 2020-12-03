@@ -1,48 +1,19 @@
 package main
 
-import (
-	"bytes"
-	"fmt"
-	"github.com/astaxie/beego"
-	"html/template"
-	"os"
-	"strings"
-)
+import "github.com/astaxie/beego"
 
 func main() {
-	temp := template.Must(template.ParseFiles("views/route.tpl"))
-	generate := map[string]interface{}{
-		"upModelName": beego.AppConfig.String("modelName"),
-		"tableName": beego.AppConfig.String("tableName"),
-		"modelSrc": beego.AppConfig.String("modelSrc"),
+	for i := 1; i < 30; i++ {
+		objs := i
+		size := 10
+		page := 2
+		beego.Info("total", i)
+		beego.Info("Allpage", map[bool]int{true:1, false:0}[objs % size > 0]+ objs / size, ", nowPage", page)
+
+		start := (page - 1) * size
+		end := map[bool]int{true:page * size, false:objs % size}[objs >= page * size]
+
+		beego.Info("start: ", start, ", end: ", end)
+		beego.Debug("----------------------------------------------------------")
 	}
-
-	f, _ := os.OpenFile(fmt.Sprint("views/route.txt"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	defer f.Close()
-	w := bytes.NewBuffer(nil)
-
-	temp.Execute(w, generate)
-	/*beego.Info(temp.Execute(w, map[string]interface{}{
-	"packageName": "models",
-	"upModelName": "Pser",
-	"tableName": "pser",
-	"paramMap": map[string]map[string]interface{}{
-		"Name": {
-			"type":"string",
-			"low": "name",
-			"prop":[]string{"column(name)"}},
-		"Password": {
-			"type":"string",
-			"low": "password",
-			"prop":[]string{"column(password)"}},
-		"Account": {
-			"type":"string",
-			"low": "account",
-			"prop":[]string{"column(account)", "unique"}},
-		},
-	}))*/
-	s := strings.ReplaceAll(w.String(), "&lt;", "<")
-	beego.Info(s)
-
-	f.WriteString(s)
 }

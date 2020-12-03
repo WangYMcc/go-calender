@@ -57,7 +57,7 @@ func (c *UserController) InsertUser(){
 
 	if  u == nil && err == nil {
 		user := models2.NewUser(mapResult)
-		u := models.Insert(user)
+		u, _ := models.Insert(user)
 
 		if &u != nil {
 			c.Data["json"] = u

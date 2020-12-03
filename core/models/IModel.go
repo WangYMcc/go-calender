@@ -33,7 +33,7 @@ func UpdateObjCache(obj Model) error{
 	return err
 }
 
-func Insert(obj Model) interface{} {
+func Insert(obj Model) (interface{}, error) {
 	workderc, _ := snow.NewWorker(int64(1))
 	id := workderc.GetId()
 	obj.SetId(id)
@@ -49,7 +49,7 @@ func Insert(obj Model) interface{} {
 	if err != nil {
 		beego.Error(err)
 		o.Rollback()
-		return nil
+		return nil, err
 	}else {
 		o.Commit()
 		obj.SetId(id)
@@ -60,7 +60,7 @@ func Insert(obj Model) interface{} {
 		}
 	}
 
-	return obj.Obj()
+	return obj.Obj(), nil
 }
 
 func InsertMore(objs []Model) ([]Model, error){

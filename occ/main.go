@@ -1,8 +1,9 @@
 package main
 
 import (
-	_ "occ/routers"
 	"github.com/astaxie/beego"
+	_ "github.com/astaxie/beego/session/redis"
+	_ "occ/routers"
 )
 
 func main() {

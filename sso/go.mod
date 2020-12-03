@@ -11,3 +11,4 @@ require (
 )
 
 replace core => ../core
+
