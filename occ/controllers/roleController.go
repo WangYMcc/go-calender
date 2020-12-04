@@ -4,23 +4,23 @@ import (
 	"core/utils"
 	"encoding/json"
 	"github.com/astaxie/beego"
-	"sso/models"
+	localMod "occ/models"
 	coreMod "core/models"
 	"strconv"
 )
 
-type UserController struct {
+type RoleController struct {
 	beego.Controller
 }
 
-func (c *UserController)Add(){
-	var m models.User
+func (c *RoleController)Add(){
+	var m localMod.Role
 
 	if e := json.Unmarshal(c.Ctx.Input.RequestBody, &m); e == nil {
 		obj, err := coreMod.Insert(&m)
 
 		if err == nil {
-			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "user insert successful", obj)
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "role insert successful", obj)
 		}else {
 			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
 		}
@@ -31,7 +31,7 @@ func (c *UserController)Add(){
 	c.ServeJSON()
 }
 
-func (c *UserController) Delete(){
+func (c *RoleController) Delete(){
 	param := c.Input().Get("id")
 	id, err := strconv.ParseInt(param, 10, 64)
 
@@ -41,13 +41,13 @@ func (c *UserController) Delete(){
 		return
 	}
 
-	if coreMod.SelectById(&models.User{Id: id}) == nil {
-		c.Data["json"] = utils.GenerateRequest(200,  "user does not exist")
+	if coreMod.SelectById(&localMod.Role{Id: id}) == nil {
+		c.Data["json"] = utils.GenerateRequest(200,  "role does not exist")
 		c.ServeJSON()
 		return
 	}
 
-	err_u := coreMod.Delete(&models.User{Id: id})
+	err_u := coreMod.Delete(&localMod.Role{Id: id})
 	if err_u != nil {
 		c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
 	}else {
@@ -57,7 +57,7 @@ func (c *UserController) Delete(){
 	c.ServeJSON()
 }
 
-func (c *UserController) DeleteBatch(){
+func (c *RoleController) DeleteBatch(){
 	param := c.Input().Get("idArray")
 
 	var idResult []int64
@@ -69,13 +69,13 @@ func (c *UserController) DeleteBatch(){
 		return
 	}
 
-	user := make([]coreMod.Model, len(idResult))
+	role := make([]coreMod.Model, len(idResult))
 
-	for i := 0; i < len(user); i++{
-		user[i] = &models.User{Id: idResult[i]}
+	for i := 0; i < len(role); i++{
+		role[i] = &localMod.Role{Id: idResult[i]}
 	}
 
-	err_u := coreMod.DeleteMore(user)
+	err_u := coreMod.DeleteMore(role)
 
 	if err_u != nil {
 		c.Data["json"] = utils.GenerateRequest(500, err.Error())
@@ -86,14 +86,14 @@ func (c *UserController) DeleteBatch(){
 	c.ServeJSON()
 }
 
-func (c *UserController)Update(){
-	var m models.User
+func (c *RoleController)Update(){
+	var m localMod.Role
 
 	if e := json.Unmarshal(c.Ctx.Input.RequestBody, &m); e == nil {
 		err := coreMod.Update(&m)
 
 		if err == nil {
-			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "user insert successful", m)
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "role insert successful", m)
 		}else {
 			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
 		}
@@ -104,43 +104,67 @@ func (c *UserController)Update(){
 	c.ServeJSON()
 }
 
-func (c *UserController)List(){
+func (c *RoleController)List(){
 	page := utils.ChangeValInt(c.Input().Get("page"))
 	size := utils.ChangeValInt(c.Input().Get("size"))
 
 	if page != -1 && size != -1 {
-		users, err := coreMod.SelectAll(&models.User{})
+		role, err := coreMod.SelectAll(&localMod.Role{})
 
 		if err == nil {
-			c.Data["json"] = utils.GenerateRequestWithList(utils.HTTP_OK, "", utils.StartPage(page, size, users))
+			c.Data["json"] = utils.GenerateRequestWithList(utils.HTTP_OK, "", utils.StartPage(page, size, role))
 		}else {
 			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
 		}
-
 	}else {
 		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "page or size Illegal")
 	}
 
-
 	c.ServeJSON()
 }
 
-func (c *UserController)Detail(){
+func (c *RoleController)Detail(){
 	id := utils.ChangeValInt64(c.Input().Get("id"))
 
 	if id != -1 {
-		user := coreMod.SelectById((&models.User{Id:id}).ToModel())
+		role := coreMod.SelectById(&localMod.Role{Id:id})
 
-		if user != nil {
-			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "", user)
+		if role != nil {
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "", role)
 		}else {
-			c.Data["json"] = utils.GenerateRequest(utils.HTTP_NOT_FOUND, "could not found the user")
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_NOT_FOUND, "could not found the role")
 		}
-
 	}else {
 		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "id Illegal")
 	}
 
+	c.ServeJSON()
+}
+
+func (c *RoleController)ListByKey(){
+	page := utils.ChangeValInt(c.Input().Get("page"))
+	size := utils.ChangeValInt(c.Input().Get("size"))
+	key := c.Input().Get("key")
+	val := c.Input().Get("val")
+
+	if page != -1 && size != -1 {
+		var role []localMod.Role
+		err := coreMod.SelectAllByKey(&localMod.Role{}, key, val, &role)
+
+		if err == nil {
+			mods := make([]coreMod.Model, len(role))
+
+			for i := 0; i < len(role); i++ {
+				mods[i] = &role[i]
+			}
+
+			c.Data["json"] = utils.GenerateRequestWithList(utils.HTTP_OK, "", utils.StartPage(page, size, mods))
+		}else {
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
+		}
+	}else {
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "page or size Illegal")
+	}
 
 	c.ServeJSON()
 }

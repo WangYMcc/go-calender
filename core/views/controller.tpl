@@ -1,11 +1,11 @@
 package {{.controllerPackageName}}
 
 import (
-	"core/models"
-	localMod "{{.modelSrc}}/models"
 	"core/utils"
 	"encoding/json"
 	"github.com/astaxie/beego"
+	localMod "{{.modelSrc}}/models"
+	coreMod "core/models"
 	"strconv"
 )
 
@@ -13,59 +13,26 @@ type {{.upModelName}}Controller struct {
 	beego.Controller
 }
 
+func (c *{{.upModelName}}Controller)Add(){
+	var m localMod.{{.upModelName}}
 
-func (c *{{.upModelName}}Controller) GetAll(){
-	mods, err := models.SelectAll(&localMod.{{.upModelName}}{})
+	if e := json.Unmarshal(c.Ctx.Input.RequestBody, &m); e == nil {
+		obj, err := coreMod.Insert(&m)
 
-	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, err.Error())
+		if err == nil {
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "{{.tableName}} insert successful", obj)
+		}else {
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
+		}
 	}else {
-		c.Data["json"] = mods
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, e.Error())
 	}
 
 	c.ServeJSON()
 }
 
-func (c *{{.upModelName}}Controller) Get{{.upModelName}}(){
-	param := c.Ctx.Input.Param(":id")
-	id, err := strconv.ParseInt(param, 10, 64)
-
-	mod := models.SelectById(&localMod.{{.upModelName}}{Id: id})
-
-	if err != nil ||  mod == nil {
-		c.Data["json"] = utils.GenerateRequest(400, err.Error())
-		c.ServeJSON()
-		return
-	}
-
-	c.Data["json"] = mod
-	c.ServeJSON()
-}
-
-func (c *{{.upModelName}}Controller) Insert{{.upModelName}}(){
-	jsonStr := c.Input().Get("{{.tableName}}Array")
-
-	var mapResult map[string]string
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
-
-	if err != nil {
-		c.Data["json"] = utils.GenerateRequest(400, "{{.tableName}} insert fault")
-	}
-
-    mod := localMod.New{{.upModelName}}(mapResult)
-    m := models.Insert(mod)
-
-    if &m != nil {
-        c.Data["json"] = m
-    }else {
-        c.Data["json"] = utils.GenerateRequest(500, "{{.tableName}} insert fault")
-    }
-
-	c.ServeJSON()
-}
-
-func (c *{{.upModelName}}Controller) Delete{{.upModelName}}(){
-	param := c.Ctx.Input.Param(":id")
+func (c *{{.upModelName}}Controller) Delete(){
+	param := c.Input().Get("id")
 	id, err := strconv.ParseInt(param, 10, 64)
 
 	if err != nil {
@@ -74,24 +41,23 @@ func (c *{{.upModelName}}Controller) Delete{{.upModelName}}(){
 		return
 	}
 
-	if models.SelectById(&localMod.{{.upModelName}}{Id: id}) == nil {
-		c.Data["json"] = utils.GenerateRequest(200,  "{{.tableName}} has deleted")
+	if coreMod.SelectById(&localMod.{{.upModelName}}{Id: id}) == nil {
+		c.Data["json"] = utils.GenerateRequest(200,  "{{.tableName}} does not exist")
 		c.ServeJSON()
 		return
 	}
 
-	err_u := models.Delete(&localMod.{{.upModelName}}{Id: id})
-
+	err_u := coreMod.Delete(&localMod.{{.upModelName}}{Id: id})
 	if err_u != nil {
 		c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
 	}else {
-		c.Data["json"] = utils.GenerateRequest(200, "{{.tableName}} delete successful")
+		c.Data["json"] = utils.GenerateRequest(200, "user delete successful")
 	}
 
 	c.ServeJSON()
 }
 
-func (c *{{.upModelName}}Controller) DeleteMore(){
+func (c *{{.upModelName}}Controller) DeleteBatch(){
 	param := c.Input().Get("idArray")
 
 	var idResult []int64
@@ -103,96 +69,102 @@ func (c *{{.upModelName}}Controller) DeleteMore(){
 		return
 	}
 
-	mod := make([]models.Model, len(idResult))
+	{{.tableName}} := make([]coreMod.Model, len(idResult))
 
-	for i := 0; i < len(mod); i++{
-		mod[i] = &localMod.{{.upModelName}}{Id: idResult[i]}
+	for i := 0; i < len({{.tableName}}); i++{
+		{{.tableName}}[i] = &localMod.{{.upModelName}}{Id: idResult[i]}
 	}
 
-	err_u := models.DeleteMore(mod)
+	err_u := coreMod.DeleteMore({{.tableName}})
 
 	if err_u != nil {
 		c.Data["json"] = utils.GenerateRequest(500, err.Error())
 	}else {
-		c.Data["json"] = utils.GenerateRequest(200, "{{.tableName}} delete successful")
+		c.Data["json"] = utils.GenerateRequest(200, "user delete successful")
 	}
 
 	c.ServeJSON()
 }
 
-func (c *{{.upModelName}}Controller) InsertMore(){
-	jsonStr := c.Input().Get("{{.tableName}}Array")
+func (c *{{.upModelName}}Controller)Update(){
+	var m localMod.{{.upModelName}}
 
-	var mapResult []map[string]string
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
+	if e := json.Unmarshal(c.Ctx.Input.RequestBody, &m); e == nil {
+		err := coreMod.Update(&m)
 
-	if err == nil {
-		mods := make([]models.Model, len(mapResult))
-
-		for i := 0; i < len(mapResult); i++ {
-			mods[i] = localMod.New{{.upModelName}}(mapResult[i])
-		}
-
-		objs, err_u := models.InsertMore(mods)
-
-		if objs != nil {
-			c.Data["json"] = objs
-		}else{
-			c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
-		}
-	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error())
-	}
-
-	c.ServeJSON()
-}
-
-func (c *{{.upModelName}}Controller) Update{{.upModelName}}(){
-	jsonStr := c.Input().Get("{{.tableName}}")
-
-	var mapResult map[string]string
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
-
-	if err == nil {
-		mod := localMod.New{{.upModelName}}(mapResult)
-
-		var e error
-		if e = models.Update(mod); e == nil {
-			c.Data["json"] = utils.GenerateRequest(200, "update {{.tableName}} successful")
+		if err == nil {
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "{{.tableName}} insert successful", m)
 		}else {
-			c.Data["json"] = utils.GenerateRequest(500, e.Error())
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
 		}
-	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error())
+	}else {
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, e.Error())
 	}
 
 	c.ServeJSON()
 }
 
-func (c *{{.upModelName}}Controller) UpdateMore(){
-	jsonStr := c.Input().Get("{{.tableName}}Array")
+func (c *{{.upModelName}}Controller)List(){
+	page := utils.ChangeValInt(c.Input().Get("page"))
+	size := utils.ChangeValInt(c.Input().Get("size"))
 
-	var mapResult []map[string]string
-	err := json.Unmarshal([]byte(jsonStr), &mapResult)
+	if page != -1 && size != -1 {
+		{{.tableName}}, err := coreMod.SelectAll(&localMod.{{.upModelName}}{})
 
-	if err == nil {
-		mods := make([]models.Model, len(mapResult))
-
-		for i := 0; i < len(mapResult); i++ {
-			mods[i] = localMod.New{{.upModelName}}(mapResult[i])
+		if err == nil {
+			c.Data["json"] = utils.GenerateRequestWithList(utils.HTTP_OK, "", utils.StartPage(page, size, {{.tableName}}))
+		}else {
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
 		}
-
-		objs, err_u := models.UpdateMore(mods)
-
-		if len(objs) != 0 {
-			c.Data["json"] = objs
-		}else{
-			c.Data["json"] = utils.GenerateRequest(500, err_u.Error())
-		}
-	}else{
-		c.Data["json"] = utils.GenerateRequest(400, err.Error())
+	}else {
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "page or size Illegal")
 	}
 
 	c.ServeJSON()
 }
 
+func (c *{{.upModelName}}Controller)Detail(){
+	id := utils.ChangeValInt64(c.Input().Get("id"))
+
+	if id != -1 {
+		{{.tableName}} := coreMod.SelectById(&localMod.{{.upModelName}}{Id:id})
+
+		if {{.tableName}} != nil {
+			c.Data["json"] = utils.GenerateRequestWithObj(utils.HTTP_OK, "", {{.tableName}})
+		}else {
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_NOT_FOUND, "could not found the {{.tableName}}")
+		}
+	}else {
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "id Illegal")
+	}
+
+	c.ServeJSON()
+}
+
+func (c *{{.upModelName}}Controller)ListByKey(){
+	page := utils.ChangeValInt(c.Input().Get("page"))
+	size := utils.ChangeValInt(c.Input().Get("size"))
+	key := c.Input().Get("key")
+	val := c.Input().Get("val")
+
+	if page != -1 && size != -1 {
+		var {{.tableName}} []localMod.{{.upModelName}}
+		err := coreMod.SelectAllByKey(&localMod.{{.upModelName}}{}, key, val, &{{.tableName}})
+
+		if err == nil {
+			mods := make([]coreMod.Model, len({{.tableName}}))
+
+			for i := 0; i < len({{.tableName}}); i++ {
+				mods[i] = &{{.tableName}}[i]
+			}
+
+			c.Data["json"] = utils.GenerateRequestWithList(utils.HTTP_OK, "", utils.StartPage(page, size, mods))
+		}else {
+			c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, err.Error())
+		}
+	}else {
+		c.Data["json"] = utils.GenerateRequest(utils.HTTP_SERVER_ERROR, "page or size Illegal")
+	}
+
+	c.ServeJSON()
+}

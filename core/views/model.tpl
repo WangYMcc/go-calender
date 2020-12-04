@@ -1,7 +1,7 @@
 package {{.modelPackageName}}
 
 import(
-    "core/models"
+    coreMod "core/models"
     "core/utils"
     "core/sysInit/redis"
     "core/sysInit/sql"
@@ -44,22 +44,17 @@ func (m *{{.upModelName}})GetId() int64{
 	return m.Id
 }
 
-func (m *{{.upModelName}})ToModel() models.Model {
-	return m.ToModel()
-}
-
-
 func (m *{{.upModelName}})QueryKey() string{
 	return "id{{range $i, $v := .paramMap}}, {{$v.low}}{{end}}"
 }
 
-func (m *{{.upModelName}})QueryResult(maps []orm.Params) ([]models.Model, error)  {
+func (m *{{.upModelName}})QueryResult(maps []orm.Params) ([]coreMod.Model, error)  {
 	if len(maps) == 0 {
 		return nil, nil
 	}
 
 	mod := make([]{{.upModelName}}, len(maps))
-	models := make([]models.Model, len(maps))
+	coreMod := make([]coreMod.Model, len(maps))
 
 	for i := 0; i &lt; len(maps); i++ {
 		id, err := strconv.ParseInt(fmt.Sprint(maps[i]["id"]), 10, 64)
@@ -68,13 +63,13 @@ func (m *{{.upModelName}})QueryResult(maps []orm.Params) ([]models.Model, error)
 			{{range $i, $v := .paramMap}}{{$i}}: {{if $v.int}}utils.ChangeValInt(fmt.Sprint(maps[i]["{{$v.low}}"])){{else}}fmt.Sprint(maps[i]["{{$v.low}}"]){{end}},
 			{{end}}}
 
-		models[i] = mod[i].ToModel()
+		coreMod[i] = &mod[i]
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return models, nil
+	return coreMod, nil
 }
 
 //实现String函数
@@ -109,17 +104,17 @@ func init(){
 			time.Sleep(1 * time.Second)
 		}
 
-		sql.RunSyncDb()
+        sql.RunSyncDb()
 
 		for !redis.IsRedisCacheInit() {
 			time.Sleep(1 * time.Second)
 		}
 
-		if err := models.FlushObjCache(&locl{{.upModelName}}); err == nil {
+		if err := coreMod.FlushObjCache(&locl{{.upModelName}}); err == nil {
 			beego.Info("success set {{.tableName}} cache")
 			for true {
 				time.Sleep(43200 * time.Second)
-				models.FlushObjCache(&locl{{.upModelName}})
+				coreMod.FlushObjCache(&locl{{.upModelName}})
 			}
 		}else {
 			beego.Error(err.Error())

@@ -1,7 +1,7 @@
 package models
 
 import (
-	redis2 "core/sysInit/redis"
+	localRedis "core/sysInit/redis"
 	"core/utils/snow"
 	"encoding/json"
 	"fmt"
@@ -17,13 +17,12 @@ type Model interface {
 	GetLock() *sync.Mutex
 	SetId(id int64)
 	GetId() int64
-	ToModel() Model
 	QueryKey() string
 	QueryResult(maps []orm.Params)  ([]Model, error)
 }
 
 func UpdateObjCache(obj Model) error{
-	conn := redis2.GetRedisPool().Get()
+	conn := localRedis.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 
@@ -162,7 +161,7 @@ func QueryForMap(sql string) ([]orm.Params, error) {
 
 //刷新redis 某个表缓存
 func FlushObjCache(obj Model) error{
-	conn := redis2.GetRedisPool().Get()
+	conn := localRedis.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 
@@ -203,7 +202,7 @@ func SelectAll(obj Model) ([]Model, error){
 
 //从数据库中通过id获取表信息
 func SelectById(obj Model) (Model){
-	conn := redis2.GetRedisPool().Get()
+	conn := localRedis.GetRedisPool().Get()
 	defer conn.Close()
 
 	result, _ := conn.Do("GET", obj.TableName() + ":" + fmt.Sprint(obj.GetId()))
@@ -325,7 +324,7 @@ func DeleteMore(objs []Model) (error) {
 
 //移除redis单个缓存
 func RemoveObjCache(obj Model) error{
-	conn := redis2.GetRedisPool().Get()
+	conn := localRedis.GetRedisPool().Get()
 	//注意close()
 	defer conn.Close()
 
@@ -334,39 +333,17 @@ func RemoveObjCache(obj Model) error{
 	return err
 }
 
-func SqlPage(sql string, pageNum int, pageSize int) string{
-	sql += " limit " + fmt.Sprint(pageNum - 1) + ", " + fmt.Sprint(pageSize)
-
-	return sql
-}
-
-func Count(obj Model) (int64, error){
+func SelectAllByKey(obj Model, key string, val string, arr interface{}) error{
 	qb, _ := orm.NewQueryBuilder("mysql")
-	qb.Select("count(id) as count").From(obj.TableName())
+
+	// 构建查询对象
+	qb.Select(obj.QueryKey()).From(obj.TableName()).Where(fmt.Sprint(key, " like '%", val, "%'"))
+
 	sql := qb.String()
 
+	// 执行 SQL 语句
 	o := orm.NewOrm()
-	res, err := o.Raw(sql).Exec()
+	_,err := o.Raw(sql).QueryRows(arr)
 
-	if err == nil {
-		num, err_ := res.RowsAffected()
-
-		if err_ == nil {
-			return num, nil
-			err = err_
-		}
-	}
-
-	return 0, err
-}
-
-func AllPage(obj Model, pageSize int64) (int64, error){
-	num, err := Count(obj)
-
-	if err == nil {
-		n := map[bool]int64{true: 1, false: 0}[num % pageSize > 0]
-		return (num / pageSize) + n, nil
-	}
-
-	return 0, nil
+	return err
 }
